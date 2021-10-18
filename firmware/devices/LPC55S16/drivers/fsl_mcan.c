@@ -425,7 +425,7 @@ void MCAN_GetDefaultConfig(mcan_config_t *config)
 
     /* Initialize MCAN Module config struct with default value. */
     config->baudRateA         = 500000U;
-    config->baudRateD         = 1000000U;
+    config->baudRateD         = 500000U;
     config->enableCanfdNormal = false;
     config->enableCanfdSwitch = false;
     config->enableLoopBackInt = false;
