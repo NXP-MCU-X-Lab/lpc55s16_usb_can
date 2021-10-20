@@ -418,6 +418,11 @@
               <FileType>1</FileType>
               <FilePath>..\can_driver.c</FilePath>
             </File>
+            <File>
+              <FileName>usbtin.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\usbtin.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

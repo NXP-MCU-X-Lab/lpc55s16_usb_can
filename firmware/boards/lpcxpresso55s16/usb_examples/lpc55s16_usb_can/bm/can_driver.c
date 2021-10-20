@@ -23,7 +23,7 @@ uint8_t rx_data[CAN_DATASIZE];
 mcan_handle_t mcanHandle;
 mcan_buffer_transfer_t txXfer;
 mcan_fifo_transfer_t rxXfer;
-uint32_t txIdentifier;
+
 uint32_t rxIdentifier;
 #define msgRam MSG_RAM_BASE
 
@@ -35,10 +35,9 @@ static void mcan_callback(CAN_Type *base, mcan_handle_t *handle, status_t status
     {
         case kStatus_MCAN_RxFifo0Idle:
         {
-
             memcpy(rx_data, rxFrame.data, rxFrame.size);
             MCAN_TransferReceiveFifoNonBlocking(EXAMPLE_MCAN, 0, &mcanHandle, &rxXfer);
-            can_rx_cb(rxFrame.id >> STDID_OFFSET, rx_data, rxFrame.size);
+            can_rx_cb(rxFrame.id >> STDID_OFFSET, rx_data, rxFrame.dlc);
         }
         break;
 
@@ -71,10 +70,9 @@ void app_can_init(void)
     CLOCK_AttachClk(kMCAN_DIV_to_MCAN);
     
     
-    txIdentifier = 0x321U;
     rxIdentifier = 0x123U;
 
-    printf("TXID:0x%X RXID:0x%X\r\n", txIdentifier, rxIdentifier);
+    printf("RXID:0x%X\r\n", rxIdentifier);
     MCAN_GetDefaultConfig(&mcanConfig);
 
 
@@ -101,20 +99,20 @@ void app_can_init(void)
     MCAN_SetMsgRAMBase(EXAMPLE_MCAN, (uint32_t)msgRam);
     memset((void *)msgRam, 0, MSG_RAM_SIZE * sizeof(uint8_t));
 
-    /* STD filter config. */
-    rxFilter.address  = STD_FILTER_OFS;
-    rxFilter.idFormat = kMCAN_FrameIDStandard;
-    rxFilter.listSize = 1U;
-    rxFilter.nmFrame  = kMCAN_reject0;
-    rxFilter.remFrame = kMCAN_rejectFrame;
-    MCAN_SetFilterConfig(EXAMPLE_MCAN, &rxFilter);
+//    /* STD filter config. */
+//    rxFilter.address  = STD_FILTER_OFS;
+//    rxFilter.idFormat = kMCAN_FrameIDStandard;
+//    rxFilter.listSize = 1U;
+//    rxFilter.nmFrame  = kMCAN_reject0;
+//    rxFilter.remFrame = kMCAN_rejectFrame;
+//    MCAN_SetFilterConfig(EXAMPLE_MCAN, &rxFilter);
 
-    stdFilter.sfec = kMCAN_storeinFifo0;
-    /* Classic filter mode, only filter matching ID. */
-    stdFilter.sft   = kMCAN_classic;
-    stdFilter.sfid1 = rxIdentifier;
-    stdFilter.sfid2 = 0x7FFU;
-    MCAN_SetSTDFilterElement(EXAMPLE_MCAN, &rxFilter, &stdFilter, 0);
+//    stdFilter.sfec = kMCAN_storeinFifo0;
+//    /* Classic filter mode, only filter matching ID. */
+//    stdFilter.sft   = kMCAN_classic;
+//    stdFilter.sfid1 = rxIdentifier;
+//    stdFilter.sfid2 = 0x7FFU;
+//    MCAN_SetSTDFilterElement(EXAMPLE_MCAN, &rxFilter, &stdFilter, 0);
 
     /* RX fifo0 config. */
     rxFifo0.address       = RX_FIFO0_OFS;
@@ -155,7 +153,7 @@ uint32_t app_can_send(uint32_t id, uint8_t *buf, uint8_t len)
     txFrame.fdf  = 0;
     txFrame.brs  = 0;
     txFrame.dlc  = len;
-    txFrame.id   = txIdentifier << STDID_OFFSET;
+    txFrame.id   = id << STDID_OFFSET;
     txFrame.data = buf;
     txFrame.size = CAN_DATASIZE;
 

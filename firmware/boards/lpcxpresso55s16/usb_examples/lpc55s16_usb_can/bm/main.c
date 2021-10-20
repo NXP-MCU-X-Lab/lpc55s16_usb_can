@@ -11,12 +11,8 @@
 #include "clock_config.h"
 #include "board.h"
 
-
-
 #include "fsl_power.h"
-
-
-
+#include "usbtin.h"
 
 
 void app_usbd_cdc_init(void);
@@ -30,23 +26,27 @@ uint32_t app_can_send(uint32_t id, uint8_t *buf, uint8_t len);
 
 void cdc_rx_cb(uint8_t *buf, uint32_t len)
 {
-    printf("cdc len:%d\r\n", len);
+    int i;
+    
+    for(i=0; i<len; i++)
+    {
+        usbtin_input(buf[i]);
+    }
 }
 
 
 
 void can_rx_cb(uint32_t id, uint8_t *buf, uint32_t len)
 {
-    int i = 0;
-    printf("can id:0x%X, len:%d\r\n", id, len);
-    for(i=0; i<len; i++)
-    {
-        printf("%02X ", buf[i]);
-    }
-    printf("\r\n");
+    usbtin_can_input(id, buf, len);
 }
 
 
+const usbtin_ops_t usbtin_ops = 
+{
+    usbd_cdc_send,
+    app_can_send,
+};
 
 void main(void)
 {
@@ -56,6 +56,7 @@ void main(void)
     CLOCK_AttachClk(BOARD_DEBUG_UART_CLK_ATTACH);
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
+    
     BOARD_InitDebugConsole();
     USART_EnableInterrupts(USART0, kUSART_RxLevelInterruptEnable | kUSART_RxErrorInterruptEnable);
     EnableIRQ(FLEXCOMM0_IRQn);
@@ -63,11 +64,13 @@ void main(void)
     app_usbd_cdc_init();
     app_can_init();
     
+    usbtin_init(&usbtin_ops);
     while(1)
     {
         
     }
 }
+
 
 
 
@@ -80,10 +83,8 @@ void FLEXCOMM0_IRQHandler(void)
     {
         data = USART_ReadByte(USART0);
         
-        printf("usart rx:%c\r\n", data);
 
-        uint8_t tx_buf[8];
-        usbd_cdc_send(tx_buf, 8);
-        app_can_send(0x123, tx_buf, 8);
+
+
     }
 }
